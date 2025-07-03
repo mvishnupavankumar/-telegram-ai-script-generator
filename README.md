@@ -17,7 +17,7 @@ This workflow listens for messages on Telegram, extracts the message text as a t
 2.  **Telegram Bot Setup**:
     * Create a new bot with BotFather on Telegram and obtain your **Bot Token**.
     * In the `Telegram Trigger` node and `SEND SCRIPT TO TELEGRAM` node, set up your **Telegram API credential** using the Bot Token.
-    * For the `SEND SCRIPT TO TELEGRAM` node, replace `7490692228` with your target `chatId`. You can get your chat ID by sending a message to your bot and then visiting `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates` in your browser.
+    * For the `SEND SCRIPT TO TELEGRAM` node, replace your id` with your target `chatId`. You can get your chat ID by sending a message to your bot and then visiting `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates` in your browser.
 3.  **NewsData.io API Key**:
     * Sign up or log in to [NewsData.io](https://newsdata.io/).
     * Generate an API key.
