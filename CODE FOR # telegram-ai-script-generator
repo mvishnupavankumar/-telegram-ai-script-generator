@@ -1,0 +1,193 @@
+{
+  "name": "TELEGRAM TOPIC-BASED SCRIPT GENERATOR",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [-400, 20],
+      "id": "YOUR_NODE_ID_1",
+      "name": "Telegram Trigger",
+      "webhookId": "YOUR_WEBHOOK_ID_1",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_CREDENTIAL_ID_1",
+          "name": "YOUR_CREDENTIAL_NAME_1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": " return [{\n  json: {\n    text: $json.message.text\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-180, 20],
+      "id": "YOUR_NODE_ID_2",
+      "name": "EXTRACT DATA"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "YOUR_ASSIGNMENT_ID",
+              "name": "topic",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [60, 20],
+      "id": "YOUR_NODE_ID_3",
+      "name": "SET TOPIC"
+    },
+    {
+      "parameters": {
+        "url": "https://newsdata.io/api/1/news?apikey=YOUR_NEWSDATA_API_KEY&language=en&country=in",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "topic",
+              "value": "={{ $json.topic }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [320, 20],
+      "id": "YOUR_NODE_ID_4",
+      "name": "FETCH NEWS"
+    },
+    {
+      "parameters": {
+        "jsCode": " const articles = $json.results || [];\n\nconst newsList = articles.map(n =>\n  `📰 ${n.title}\\n🔗 ${n.link}`\n).join('\\n\\n');\n\nreturn [{\n  json: {\n    emailBody: newsList || \"No news articles found.\"\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [540, 20],
+      "id": "YOUR_NODE_ID_5",
+      "name": "FORMAT NEWS"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_OPENROUTER_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=  {\n  \"model\": \"mistralai/mistral-7b-instruct\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a video scriptwriter.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a short, engaging 60-second video script about: {{$json['topic']}}\"\n    }\n  ]\n}\n",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [740, 20],
+      "id": "YOUR_NODE_ID_6",
+      "name": "GENERATE SCRIPT"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "YOUR_ASSIGNMENT_ID_2",
+              "name": "prompt",
+              "value": "= {{$json[\"body\"][\"choices\"][0][\"message\"][\"content\"].replace(/\\n/g, \" \")}}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [960, 20],
+      "id": "YOUR_NODE_ID_7",
+      "name": "FORMAT SCRIPT"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.prompt }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1260, 20],
+      "id": "YOUR_NODE_ID_8",
+      "name": "SEND TO TELEGRAM",
+      "webhookId": "YOUR_WEBHOOK_ID_2",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_CREDENTIAL_ID_2",
+          "name": "YOUR_CREDENTIAL_NAME_2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{"node": "EXTRACT DATA", "type": "main", "index": 0}]]
+    },
+    "EXTRACT DATA": {
+      "main": [[{"node": "SET TOPIC", "type": "main", "index": 0}]]
+    },
+    "SET TOPIC": {
+      "main": [[{"node": "FETCH NEWS", "type": "main", "index": 0}]]
+    },
+    "FETCH NEWS": {
+      "main": [[{"node": "FORMAT NEWS", "type": "main", "index": 0}]]
+    },
+    "FORMAT NEWS": {
+      "main": [[{"node": "GENERATE SCRIPT", "type": "main", "index": 0}]]
+    },
+    "GENERATE SCRIPT": {
+      "main": [[{"node": "FORMAT SCRIPT", "type": "main", "index": 0}]]
+    },
+    "FORMAT SCRIPT": {
+      "main": [[{"node": "SEND TO TELEGRAM", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
